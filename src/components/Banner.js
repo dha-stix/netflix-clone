@@ -5,40 +5,48 @@ import styled from 'styled-components'
 
 const Banner = () => {
     const [movie, setMovie] = useState([])
+    const [loading, setLoading] = useState(true)
 
     const truncate = (str, n)=> (
         str?.length > n ? str.substr(0,n-1) + "..." :str
     )
     useEffect(()=> {
         async function fetchMovie() {
-            const request = await axios.get(requests.fetchNetflixOriginals)
-        setMovie(
-            request.data.results[
+            try {
+                const request = await axios.get(requests.fetchNetflixOriginals)
+                setMovie( request.data.results[
                 Math.floor(Math.random() * request.data.results.length)
-            ]
-        )
-        return request
+                ]
+                )
+                setLoading(false)
+            }catch(err) {
+                console.error(err)
+            }
         }
         fetchMovie()
     }, [])
 
     return (
         <BannerContainer bgImage={movie?.backdrop_path}>
-            <BannerContents>
-                <BannerTitle>
-                    {movie?.title || movie?.name || movie?.original_name}
-                </BannerTitle>
+        {loading ? (<LoadingText>Please wait...</LoadingText>) :
+            <>
+                <BannerContents>
+                    <BannerTitle>
+                        {movie?.title || movie?.name || movie?.original_name}
+                    </BannerTitle>
 
-                <ButtonGroup>
-                    <PlayButton>Play</PlayButton>
-                    <ListButton>My List</ListButton>
-                </ButtonGroup>
-                    
-                <BannerDescription>
-                {truncate(movie?.overview, 150)}
-                </BannerDescription>
-            </BannerContents>
-            <FadeShadow/>
+                    <ButtonGroup>
+                        <PlayButton>Play</PlayButton>
+                        <ListButton>My List</ListButton>
+                    </ButtonGroup>
+                        
+                    <BannerDescription>
+                    {truncate(movie?.overview, 150)}
+                    </BannerDescription>
+                </BannerContents>
+                <FadeShadow/>
+            </>
+        }
         </BannerContainer>
     )
 }
@@ -47,8 +55,9 @@ export default Banner
 
 const BannerContainer = styled.header`
 width: 100%;
-background-image: url(${props => "https://image.tmdb.org/t/p/original"+props.bgImage});
+background-image: url(${props =>  "https://image.tmdb.org/t/p/original"+props.bgImage});
 background-position: center;
+
 background-repeat: no-repeat;
 background-size: cover;
 object-fit: contain;
@@ -68,6 +77,12 @@ max-width: 45rem
 `
 const ButtonGroup = styled.div`
 padding-bottom: 15px;
+`
+const LoadingText= styled.p`
+    color: #fff;
+    text-align: center;
+    opacity: 0.7;
+    margin-top: 20px;
 `
 
 const BannerTitle = styled.h1`

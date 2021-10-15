@@ -1,55 +1,44 @@
 import React, {useState, useEffect} from 'react'
-import YouTube from 'react-youtube'
-import movieTrailer from "movie-trailer"
 import styled from 'styled-components'
 import axios from '../axios'
+
 const imageBaseUrl = "https://image.tmdb.org/t/p/original"
 
 
 const MovieRow = ({title, fetchUrl, isLargeRow}) => {
     const [movies, setMovies] = useState([])
-    const [trailerUrl, setTrailerUrl] = useState("")
-
-    const opts = {
-        height: "300",
-        width: "100%",
-        playerVars: {
-            autoplay: 1
-        }
-    }
-    const handleClick= (movie) => {
-       if(trailerUrl) {
-           setTrailerUrl("")
-       } else {
-            movieTrailer(movie?.name || "")
-            .then(url => {
-                const urlParams = new URLSearchParams(new URL (url).search)
-                setTrailerUrl(urlParams.get("v"))
-            }).catch((error) => console.error(error))
-       }
-    }
+    const [loading, setLoading] = useState(true)
 
     useEffect(()=>{
     async function fetchData() {
-        const request = await axios.get(fetchUrl)
-        setMovies(request.data.results)
+        try {
+            const request = await axios.get(fetchUrl)
+            setMovies(request.data.results)
+            setLoading(false)
+        }catch(err) {
+            console.error(err)
+        }
     }
     fetchData()  
     }, [fetchUrl])
 
     return (
         <Container>
-          <MovieTag>{title}</MovieTag>
+        <MovieTag>{title}</MovieTag>
+        {loading ? (
+            <LoadingText>Please wait...</LoadingText>
+        ):
           <MoviesContainer>
             {movies.map(movie => (
-                <MovieImg src={`${imageBaseUrl}${isLargeRow ? movie.backdrop_path : movie.poster_path}`} alt={movie.name} 
+                <MovieImg src={`${imageBaseUrl}${isLargeRow ? movie.backdrop_path : movie.poster_path}`} 
+                alt={movie.name} 
                 key={movie.id} 
                 isLargeRow={isLargeRow}
-                onClick={handleClick(movie)}
                 /> 
             ))}
         </MoviesContainer>
-       { trailerUrl && <YouTube videoId={trailerUrl} opts={opts}/>}
+        }
+          
         </Container>
     )
 }
@@ -59,6 +48,12 @@ export default MovieRow
 const Container = styled.div`
 width: 100%;
 padding-left: 20px
+`
+const LoadingText= styled.p`
+    color: #fff;
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.7
 `
 const MoviesContainer = styled(Container)`
 display: flex;
